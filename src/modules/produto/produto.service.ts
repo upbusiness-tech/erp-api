@@ -41,13 +41,13 @@ export class ProdutoService {
     return db.collection(this.COLLECTION_NAME)
   }
 
-  public async criar(produto: ProdutoDTO): Promise<ProdutoDTO | undefined> {
+  public async criar(id_empresa: string, produto: ProdutoDTO): Promise<ProdutoDTO | undefined> {
     const produtoParaSalvar: ProdutoDTO = {
       ...produto,
       nome: produto.nome.toLowerCase(),
-      empresa_reference: idToDocumentRef(produto.empresa_reference as string, COLLECTIONS.EMPRESAS),
+      empresa_reference: idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS),
       categoria_reference: idToDocumentRef(produto.categoria_reference as string, COLLECTIONS.CATEGORIA_PRODUTO),
-      rotativo: 0,
+      rotativo: 1,
       // revisar essa lógica de código do produto, pois quando acontecer alguma exclusão de produto, pode gerar produtos com o mesmo código
       codigo: (produto.codigo) ? produto.codigo : (await this.setup().count().get().then(count => count.data().count + 1)).toString(),
       data_criacao: new Date(),

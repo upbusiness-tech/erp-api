@@ -1,34 +1,35 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ProdutoDTO } from './produto.dto';
 import { ProdutoService } from './produto.service';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { User } from 'src/decorator/user.decorator';
 
 @Controller('produto')
+@UseGuards(AuthGuard)
 export class ProdutoController {
 
   constructor(private readonly produtoService: ProdutoService) { }
 
-  private id_empresaTemplate: string = 'IEtFbUYnrImdpmoHliTy'
-  private id_categoriaTemplate: string = 'zeUZr2futnU6wxonVv1r';
-  private categoriaTemplate: string = 'Dindin gourmet';
+  private id_categoriaTemplate: string = '5xwD3FVjBPh6ak9dAR0a';
+  private categoriaTemplate: string = 'DinDin';
 
   @Post()
-  criar(@Body() produto: ProdutoDTO) {
+  criar(@Body() produto: ProdutoDTO, @User('uid') uid: string) {
     try {
       // temporariamente passando empresa e categorias fixas
-      produto.empresa_reference = this.id_empresaTemplate;
       produto.categoria_reference = this.id_categoriaTemplate;
       produto.categoria = this.categoriaTemplate;
 
-      return this.produtoService.criar(produto)
+      return this.produtoService.criar(uid, produto)
     } catch (error) {
       throw new HttpException(`Erro ao criar produto ${error}`, HttpStatus.BAD_REQUEST)
     }
   }
 
   @Get()
-  listarTodos() {
+  listarTodos(@User('uid') uid: string) {
     try {
-      return this.produtoService.listarTodos(this.id_empresaTemplate);
+      return this.produtoService.listarTodos(uid);
     } catch (error) {
       throw new HttpException(`Erro ao buscar por produtos da empresa ${error}`, HttpStatus.BAD_REQUEST)
     }
@@ -62,9 +63,9 @@ export class ProdutoController {
     }
   }
 
-  @Get('/paginar/:idEmpresa')
+  @Get('/paginar')
   paginarProdutos(
-    @Param('idEmpresa') idEmpresa: string,
+    @User('uid') uid: string,
     @Query('limite') limite: number,
     // @Query('categoria') categoria: string,
     @Query('ordem') ordem: string,
@@ -73,7 +74,7 @@ export class ProdutoController {
   ) {
     try {
       const resultado = this.produtoService.paginarProdutos({
-        id_empresa: idEmpresa,
+        id_empresa: uid,
         limite: Number(limite),
         // categoria: categoria,
         ordem: ordem,
