@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { EmpresaModule } from './modules/empresa/empresa.module';
 import { ProdutoModule } from './modules/produto/produto.module';
 import { AdminModule } from './admin/admin.module';
+import { FuncionarioModule } from './modules/funcionario/funcionario.module';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import { AdminModule } from './admin/admin.module';
     ProdutoModule,
     EmpresaModule,
     AuthModule,
-    AdminModule
+    AdminModule,
+    FuncionarioModule
   ],
   controllers: [AppController],
   providers: [AppService],
