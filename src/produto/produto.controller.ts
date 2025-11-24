@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
 import { ProdutoDTO } from './produto.dto';
 import { ProdutoService } from './produto.service';
 
@@ -18,7 +18,7 @@ export class ProdutoController {
       produto.empresa_reference = this.id_empresaTemplate;
       produto.categoria_reference = this.id_categoriaTemplate;
       produto.categoria = this.categoriaTemplate;
-      
+
       return this.produtoService.criar(produto)
     } catch (error) {
       throw new HttpException(`Erro ao criar produto ${error}`, HttpStatus.BAD_REQUEST)
@@ -59,6 +59,30 @@ export class ProdutoController {
       return this.produtoService.atualizarPorId(id, produtoParaAtualizar);
     } catch (error) {
       throw new HttpException(`Erro ao atualizar produto por ID ${error}`, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  @Get('/paginar/:idEmpresa')
+  paginarProdutos(
+    @Param('idEmpresa') idEmpresa: string,
+    @Query('limite') limite: number,
+    // @Query('categoria') categoria: string,
+    @Query('ordem') ordem: string,
+    @Query('cursor') cursor: string,
+    @Query('cursorPrev') cursorPrev: string,
+  ) {
+    try {
+      const resultado = this.produtoService.paginarProdutos({
+        id_empresa: idEmpresa,
+        limite: Number(limite),
+        // categoria: categoria,
+        ordem: ordem,
+        cursor: cursor,
+        cursorPrev: cursorPrev,
+      });
+      return resultado;
+    } catch (error) {
+      throw new HttpException(`Erro ao paginar produtos ${error}`, HttpStatus.BAD_REQUEST)
     }
   }
 

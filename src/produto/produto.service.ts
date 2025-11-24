@@ -11,7 +11,7 @@ export class ProdutoService {
 
   constructor() {
     this.COLLECTION_NAME = COLLECTIONS.PRODUTOS,
-    this.setup()
+      this.setup()
   }
 
   private docToProduto(id_produto: string, data: FirebaseFirestore.DocumentData): ProdutoDTO {
@@ -110,5 +110,57 @@ export class ProdutoService {
       ...payload
     });
   }
+
+  public async paginarProdutos({
+    id_empresa,
+    limite,
+    // categoria,
+    ordem,
+    cursor,
+    cursorPrev
+  }: {
+    id_empresa: string;
+    limite: number;
+    // categoria?: string;
+    ordem?: string;
+    cursor?: string;      // próximo
+    cursorPrev?: string;  // anterior
+  }) {
+    let query = this.setup().orderBy(ordem ?? "data_criacao", "desc");
+    query = query.where("empresa_reference", "==", idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS));
+    
+    // if (categoria) query = query.where("categoria", "==", categoria);
+
+    let snapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>;
+
+    // Indo para a próxima página
+    if (cursor) {
+      const cursorDoc = await this.setup().doc(cursor).get();
+      snapshot = await query.startAfter(cursorDoc).limit(limite).get();
+    }
+    // Voltando para a página anterior
+    else if (cursorPrev) {
+      const cursorDoc = await this.setup().doc(cursorPrev).get();
+      snapshot = await query.endBefore(cursorDoc).limitToLast(limite).get();
+    }
+    // Primeira página
+    else {
+      snapshot = await query.limit(limite).get();
+    }
+
+    const produtos: ProdutoDTO[] = snapshot.docs.map(doc => ({
+      ...this.docToProduto(doc.id, doc.data())
+    }));
+
+    const first = snapshot.docs[0];
+    const last = snapshot.docs[snapshot.docs.length - 1];
+
+    return {
+      produtos,
+      nextCursor: last?.id ?? null,
+      prevCursor: first?.id ?? null,
+    };
+  };
+
 
 }
