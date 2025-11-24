@@ -14,9 +14,9 @@ export class ProdutoService {
       this.setup()
   }
 
-  private docToProduto(id_produto: string, data: FirebaseFirestore.DocumentData): ProdutoDTO {
+  private docToObject(id: string, data: FirebaseFirestore.DocumentData): ProdutoDTO {
     return {
-      id_produto: id_produto,
+      id_produto: id,
       id_empresa: data.empresa_reference.id,
       categoria: data.categoria,
       categoria_reference: data.categoria_reference.id,
@@ -59,13 +59,13 @@ export class ProdutoService {
     // falta adicionar o produto ao dicionario da empresa
     // .....
 
-    return this.docToProduto(doc.id, doc.data()!);
+    return this.docToObject(doc.id, doc.data()!);
   }
 
   public async listarTodos(id_empresa: string): Promise<ProdutoDTO[]> {
     let query = await this.setup().where('empresa_reference', '==', idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS)).get();
     if (!query.empty) {
-      return query.docs.map(doc => this.docToProduto(doc.id, doc.data()));
+      return query.docs.map(doc => this.docToObject(doc.id, doc.data()));
     }
     return []
   }
@@ -73,7 +73,7 @@ export class ProdutoService {
   public async encontrarPorId(id_produto: string): Promise<ProdutoDTO | undefined> {
     const doc = await this.setup().doc(id_produto).get();
     if (!doc.exists) throw new Error("Produto não encontrado");
-    return this.docToProduto(doc.id, doc.data()!);
+    return this.docToObject(doc.id, doc.data()!);
   }
 
   public async remover(id_produto: string): Promise<void> {
@@ -149,7 +149,7 @@ export class ProdutoService {
     }
 
     const produtos: ProdutoDTO[] = snapshot.docs.map(doc => ({
-      ...this.docToProduto(doc.id, doc.data())
+      ...this.docToObject(doc.id, doc.data())
     }));
 
     const first = snapshot.docs[0];
