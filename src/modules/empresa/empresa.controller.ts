@@ -15,15 +15,15 @@ export class EmpresaController {
     return this.empresaService.encontrarPorId(uid);
   }
 
-  @Put('/:id')
-  atualizarPorId(@Param('id') id: string, @Body() empresaBody: Partial<EmpresaDTO>) {
+  @Put('/atualizar')
+  atualizarPorId(@User('uid') uid: string, @Body() empresaBody: Partial<EmpresaDTO>) {
     // tirando os campos que nao permitidos passar por alterações
     const camposNaoPermitidos = ['id_empresa', 'empresa_reference', 'data_criacao', 'email', 'plano', 'uuid_auth'];
     for (const campo of camposNaoPermitidos) {
       if (campo in empresaBody) delete (empresaBody as any)[campo];
     }
 
-    this.empresaService.atualizar(id, empresaBody);
+    this.empresaService.atualizar(uid, empresaBody);
   }
 
 }
