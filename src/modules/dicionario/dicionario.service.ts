@@ -28,46 +28,21 @@ export class DicionarioService {
     }
   }
 
-  public async adicionar(id_empresa: string, item_dicionario: ProdutoDicionario, dicionario?: DicionarioDTO) {
-    let query = this.setup().where("empresa_reference", "==", idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS))
-
-    const dicionarioEncontrado = await query.get()
-
-    // se estiver vazio, significa que precisa ser criado
-    if (dicionarioEncontrado.empty) {
-      const dicionarioParaCadastrar: DicionarioDTO = {
-        empresa_reference: idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS),
-        dicionario_produtos: [item_dicionario]
-      }
-
-      await this.setup().add(dicionarioParaCadastrar)
-      return
-    }
-
-    const dicionarioRef = this.setup().doc(dicionarioEncontrado.docs[0].id)
-    await dicionarioRef.update({
-      ...dicionario,
-      dicionario_produtos: admin.firestore.FieldValue.arrayUnion(item_dicionario),
-    })
-
-  }
-
   public async adicionar_EmTransacao(
     transaction: FirebaseFirestore.Transaction,
     id_empresa: string,
     item_dicionario: ProdutoDicionario,
     dicionario?: DicionarioDTO
   ) {
-    const collection = this.setup();
     const empresaRef = idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS);
 
-    const query = await collection
+    const query = await this.setup()
       .where("empresa_reference", "==", empresaRef)
       .get();
 
     if (query.empty) {
       // criar novo dicionário
-      const newRef = collection.doc();
+      const newRef = this.setup().doc();
       transaction.set(newRef, {
         empresa_reference: empresaRef,
         dicionario_produtos: [item_dicionario]
@@ -82,7 +57,40 @@ export class DicionarioService {
     });
   }
 
-  public async encontrar(id_empresa: string): Promise<DicionarioDTO>{
+  public async atualizar_EmTransacao(transaction: FirebaseFirestore.Transaction, id_empresa: string, produto_dicionario: ProdutoDicionario) {
+    // quando um produto sofrer atualizações, o dicionário também deve atualizar respectivamente
+    const dicionarioParaAtualizar = await this.encontrarPorId(id_empresa)
+
+    // encontrando o produto e o atualizando
+    const indiceItemParaAtualizar = dicionarioParaAtualizar.dicionario_produtos.findIndex(item => item.id_produto === produto_dicionario.id_produto)
+
+    dicionarioParaAtualizar.dicionario_produtos[indiceItemParaAtualizar] = {
+      id_produto: produto_dicionario.id_produto,
+      label: produto_dicionario.label
+    }
+
+    const dicRef = this.setup().doc(dicionarioParaAtualizar.id_dicionario!);
+
+    transaction.update(dicRef, {
+      dicionario_produtos: dicionarioParaAtualizar.dicionario_produtos
+    })
+  }
+
+  public async remover_EmTransacao(transaction: FirebaseFirestore.Transaction, id_empresa: string, id_produto: string) {
+    // quando um produto for excluído, ele também deve ser removido do dicionario
+    const dicionarioParaAtualizar = await this.encontrarPorId(id_empresa)
+
+    // encontrando o produto e o atualizando
+    const produtosDicionarioAtualizado = dicionarioParaAtualizar.dicionario_produtos.filter(item => item.id_produto !== id_produto)
+
+    const dicRef = this.setup().doc(dicionarioParaAtualizar.id_dicionario!)
+
+    transaction.update(dicRef, {
+      dicionario_produtos: produtosDicionarioAtualizado
+    })
+  }
+
+  public async encontrarPorId(id_empresa: string): Promise<DicionarioDTO> {
     const doc = await this.setup().where("empresa_reference", "==", idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS)).get()
     if (doc.empty) throw new NotFoundException('Dicionario não encontrado')
     return this.docToObject(doc.docs[0].id, doc.docs[0].data())

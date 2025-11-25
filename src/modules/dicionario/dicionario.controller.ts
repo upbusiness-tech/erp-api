@@ -11,7 +11,7 @@ export class DicionarioController {
 
   @Get()
   encontrar(@User('uid') uid: string){
-    return this.dicionarioService.encontrar(uid);
+    return this.dicionarioService.encontrarPorId(uid);
   }
 
 }

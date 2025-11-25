@@ -21,7 +21,7 @@ export class ProdutoService {
       id_produto: id,
       id_empresa: data.empresa_reference.id || '',
       categoria: data.categoria,
-      categoria_reference: data.categoria_reference.id || '',
+      categoria_reference: data.categoria_reference?.id || '',
       empresa_reference: data.empresa_reference.id || '',
       nome: data.nome,
       preco_venda: data.preco_venda,
@@ -45,7 +45,7 @@ export class ProdutoService {
 
   public async criar(id_empresa: string, produto: ProdutoDTO): Promise<ProdutoDTO> {
     let produtoId: string = ''
-    
+
     await db.runTransaction(async (transaction) => {
 
       const produtoRef = this.setup().doc();
@@ -75,7 +75,7 @@ export class ProdutoService {
     });
 
     const docCriado = await this.setup().doc(produtoId).get()
-    if(!docCriado.exists) throw new HttpException(`Produto não foi criado corretamente`, HttpStatus.BAD_REQUEST);
+    if (!docCriado.exists) throw new HttpException(`Produto não foi criado corretamente`, HttpStatus.BAD_REQUEST);
     return this.docToObject(docCriado.id, docCriado.data()!)
   }
 
@@ -93,15 +93,23 @@ export class ProdutoService {
     return this.docToObject(doc.id, doc.data()!);
   }
 
-  public async remover(id_produto: string): Promise<void> {
-    await this.setup().doc(id_produto).delete();
+  public async remover(id_produto: string, id_empresa: string): Promise<void> {
+    const produtoRef = this.setup().doc(id_produto);
+
+    // ao remover um produto, ele também deve ser removido do dicionário de pesquisa para que não aconteçam pesquisas no nome de um produto excluído
+    await db.runTransaction(async (transaction) => {
+      // primeiro apagando do dicionário
+      await this.dicionarioService.remover_EmTransacao(transaction, id_empresa, id_produto)
+
+      // finalmente apagando o produto
+      transaction.delete(produtoRef);
+    })
+
   }
 
-  // ao atualizar um produto, seu dicionario também deve ser atualizado
-  public async atualizarPorId(id_produto: string, payload: Partial<ProdutoDTO>): Promise<void> {
+  public async atualizarPorId(id_produto: string, id_empresa: string, payload: Partial<ProdutoDTO>): Promise<void> {
     const produtoRef = this.setup().doc(id_produto);
     const produtoDoc = await produtoRef.get();
-
     if (!produtoDoc.exists) throw new Error("Produto não encontrado");
 
     // verificar se há outro produto com o mesmo código que ta sendo passado para atualização
@@ -109,13 +117,15 @@ export class ProdutoService {
       // ......
     }
 
+    const produtoObj = this.docToObject(produtoDoc.id, produtoDoc.data()!)
+
     // se houver incremento na quantidade_estoque deve haver incremendo no rotativo
     if (payload.quantidade_estoque != undefined && payload.quantidade_estoque != null) {
-      const quantidade_atual = produtoDoc.data()!.quantidade_estoque;
+      const quantidade_atual = produtoObj.quantidade_estoque;
       const nova_quantidade = payload.quantidade_estoque;
 
       if (nova_quantidade > quantidade_atual) {
-        const rotativo_atual = produtoDoc.data()!.rotativo || 0;
+        const rotativo_atual = produtoObj.rotativo || 0;
         payload.rotativo = rotativo_atual + 1;
         payload.ultima_reposicao = new Date();
       }
@@ -124,6 +134,22 @@ export class ProdutoService {
     // ao atualizar qualquer campo, deve-se atualizar o campo de ultima_atualizacao
     payload.ultima_atualizacao = new Date();
 
+    // o dicionário só vai sofrer alterações se o produto mudar de nome
+    if (payload.nome !== undefined && payload.nome !== produtoObj.nome) {
+      await db.runTransaction(async (transaction) => {
+        await this.dicionarioService.atualizar_EmTransacao(transaction, id_empresa, {
+          id_produto: id_produto,
+          label: payload.nome as string
+        })
+
+        transaction.update(produtoRef, {
+          ...payload
+        })
+      })
+      return
+    }
+
+    // se nao entrar no if, entao atualiza de forma normal
     await produtoRef.update({
       ...payload
     });
@@ -132,14 +158,14 @@ export class ProdutoService {
   public async paginarProdutos({
     id_empresa,
     limite,
-    // categoria,
+    categoriaId,
     ordem,
     cursor,
     cursorPrev
   }: {
     id_empresa: string;
     limite: number;
-    // categoria?: string;
+    categoriaId?: string;
     ordem?: string;
     cursor?: string;      // próximo
     cursorPrev?: string;  // anterior
@@ -147,7 +173,7 @@ export class ProdutoService {
     let query = this.setup().orderBy(ordem ?? "data_criacao", "desc");
     query = query.where("empresa_reference", "==", idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS));
 
-    // if (categoria) query = query.where("categoria", "==", categoria);
+    if (categoriaId) query = query.where("categoria_reference", "==", idToDocumentRef(categoriaId, COLLECTIONS.CATEGORIA_PRODUTO));
 
     let snapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>;
 
@@ -179,6 +205,29 @@ export class ProdutoService {
       prevCursor: first?.id ?? null,
     };
   };
+
+  public async encontrar(campoDeFiltro: string, operacao: admin.firestore.WhereFilterOp, valor: any, asObject: boolean) {
+    let query = await this.setup().where(campoDeFiltro, operacao, valor).get()
+
+    if (query.empty) return []
+
+    if (asObject) {
+      const listaDeProdutosEncontrados: ProdutoDTO[] = query.docs.map((doc) => {
+        return this.docToObject(doc.id, doc.data()!)
+      })
+
+      return listaDeProdutosEncontrados
+    }
+
+    return query.docs
+  }
+
+  public atualizar_EmTransacao(transaction: FirebaseFirestore.Transaction, id_produto: string, produtoAtualizado: Partial<ProdutoDTO>) {
+    const docRef = this.setup().doc(id_produto)
+    transaction.update(docRef, {
+      ...produtoAtualizado
+    });
+  }
 
 
 }

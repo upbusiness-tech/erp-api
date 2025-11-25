@@ -6,7 +6,7 @@ export class ProdutoDTO {
   empresa_reference?: string | DocumentReference;
   nome: string;
   categoria: string;
-  categoria_reference?: string | DocumentReference;
+  categoria_reference?: string | DocumentReference | null;
   uni_medida: 'GRAMAS' | 'METROS' | 'QUILO' | 'UNIDADE';
   preco_compra?: number;
   preco_venda: number;
