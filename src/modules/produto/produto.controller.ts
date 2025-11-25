@@ -10,14 +10,12 @@ export class ProdutoController {
 
   constructor(private readonly produtoService: ProdutoService) { }
 
-  private id_categoriaTemplate: string = '5xwD3FVjBPh6ak9dAR0a';
-  private categoriaTemplate: string = 'DinDin';
+  private categoriaTemplate: string = 'Doces';
 
   @Post()
   criar(@Body() produto: ProdutoDTO, @User('uid') uid: string) {
     try {
       // temporariamente passando empresa e categorias fixas
-      produto.categoria_reference = this.id_categoriaTemplate;
       produto.categoria = this.categoriaTemplate;
 
       return this.produtoService.criar(uid, produto)
@@ -67,7 +65,7 @@ export class ProdutoController {
   paginarProdutos(
     @User('uid') uid: string,
     @Query('limite') limite: number,
-    // @Query('categoria') categoria: string,
+    @Query('categoria') categoriaId: string,
     @Query('ordem') ordem: string,
     @Query('cursor') cursor: string,
     @Query('cursorPrev') cursorPrev: string,
@@ -76,7 +74,7 @@ export class ProdutoController {
       const resultado = this.produtoService.paginarProdutos({
         id_empresa: uid,
         limite: Number(limite),
-        // categoria: categoria,
+        categoriaId: categoriaId,
         ordem: ordem,
         cursor: cursor,
         cursorPrev: cursorPrev,

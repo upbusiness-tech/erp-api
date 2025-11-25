@@ -4,5 +4,4 @@ export enum COLLECTIONS {
   EMPRESAS = "empresas",
   FUNCIONARIOS = "funcionarios",
   DICIONARIO = "dicionario-pesquisa",
-  CATEGORIA = "categoria-produto",
 }

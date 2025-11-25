@@ -21,7 +21,7 @@ export class ProdutoService {
       id_produto: id,
       id_empresa: data.empresa_reference.id || '',
       categoria: data.categoria,
-      categoria_reference: data.categoria_reference.id || '',
+      categoria_reference: data.categoria_reference?.id || '',
       empresa_reference: data.empresa_reference.id || '',
       nome: data.nome,
       preco_venda: data.preco_venda,
@@ -132,14 +132,14 @@ export class ProdutoService {
   public async paginarProdutos({
     id_empresa,
     limite,
-    // categoria,
+    categoriaId,
     ordem,
     cursor,
     cursorPrev
   }: {
     id_empresa: string;
     limite: number;
-    // categoria?: string;
+    categoriaId?: string;
     ordem?: string;
     cursor?: string;      // próximo
     cursorPrev?: string;  // anterior
@@ -147,7 +147,7 @@ export class ProdutoService {
     let query = this.setup().orderBy(ordem ?? "data_criacao", "desc");
     query = query.where("empresa_reference", "==", idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS));
 
-    // if (categoria) query = query.where("categoria", "==", categoria);
+    if (categoriaId) query = query.where("categoria_reference", "==", idToDocumentRef(categoriaId, COLLECTIONS.CATEGORIA_PRODUTO));
 
     let snapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData, FirebaseFirestore.DocumentData>;
 
@@ -179,6 +179,29 @@ export class ProdutoService {
       prevCursor: first?.id ?? null,
     };
   };
+
+  public async encontrar(campoDeFiltro: string, operacao: admin.firestore.WhereFilterOp, valor: any, asObject: boolean) {
+    let query = await this.setup().where(campoDeFiltro, operacao, valor).get()
+  
+    if (query.empty) return []
+
+    if(asObject) {
+      const listaDeProdutosEncontrados: ProdutoDTO[] = query.docs.map((doc) => {
+        return this.docToObject(doc.id, doc.data()!)
+      })
+
+      return listaDeProdutosEncontrados
+    }
+      
+    return query.docs
+  }
+
+  public atualizar_EmTransacao(transaction: FirebaseFirestore.Transaction, id_produto: string, produtoAtualizado: Partial<ProdutoDTO>) {
+    const docRef = this.setup().doc(id_produto)
+    transaction.update(docRef, {
+      ...produtoAtualizado
+    });
+  }
 
 
 }
