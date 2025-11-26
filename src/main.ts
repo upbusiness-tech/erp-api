@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import 'tsconfig-paths/register';
 import { AppModule } from './app.module';
 
 async function bootstrap() {

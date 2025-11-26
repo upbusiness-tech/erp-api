@@ -1,13 +1,12 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { DocumentReference } from 'firebase-admin/firestore';
 import { db } from 'src/config/firebase';
 import { COLLECTIONS } from 'src/enum/firestore.enum';
 import { EstatisticaProdutoService } from 'src/modules/estatistica-produto/estatistica-produto.service';
-import { ProdutoService } from 'src/modules/produto/produto.service';
-import { VendaDTO, ItemVenda } from './venda.dto';
-import { idToDocumentRef } from 'src/util/firestore.util';
-import { DocumentReference } from 'firebase-admin/firestore';
 import { ProdutoDTO } from 'src/modules/produto/produto.dto';
-import { EstatisticaProdutoDTO } from 'src/modules/estatistica-produto/estatistica-produto.dto';
+import { ProdutoService } from 'src/modules/produto/produto.service';
+import { idToDocumentRef } from 'src/util/firestore.util';
+import { ItemVenda, VendaDTO } from './venda.dto';
 
 @Injectable()
 export class VendaService {
@@ -85,7 +84,7 @@ export class VendaService {
         })
       })
 
-      // por fim, registrando os valores que entraram no fluxo
+      // por fim, registrando os valores que entraram no documento de fluxo de caixa
       // .....
       
     })
