@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
 import { getAuth } from 'firebase-admin/auth';
-import { adminAuth } from 'src/config/firebase';
+import { adminAuth } from '@/config/firebase';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
