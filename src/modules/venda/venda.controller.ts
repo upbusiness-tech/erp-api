@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpException, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { User } from 'src/decorator/user.decorator';
 import { VendaDTO } from './venda.dto';
@@ -13,7 +13,11 @@ export class VendaController {
   @HttpCode(HttpStatus.CREATED)
   @Post()
   criar(@User('uid') uid: string, @Body() vendaBody: Partial<VendaDTO>) {
-    return this.vendaService.criar(uid, vendaBody)
+    try {
+      return this.vendaService.criar(uid, vendaBody)
+    } catch (error) {
+      throw new HttpException(`Erro ao buscar produto por ID ${error}`, HttpStatus.BAD_REQUEST)
+    }
   }
 
 }

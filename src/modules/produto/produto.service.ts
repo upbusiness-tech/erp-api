@@ -57,7 +57,7 @@ export class ProdutoService {
         empresa_reference: idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS),
         categoria_reference: idToDocumentRef(produto.categoria_reference as string, COLLECTIONS.CATEGORIA_PRODUTO),
         rotativo: 1,
-        preco_compra: (produto.preco_compra === undefined)?0:produto.preco_compra,
+        preco_compra: (produto.preco_compra === undefined) ? 0 : produto.preco_compra,
         // revisar essa lógica de código do produto, pois quando acontecer alguma exclusão de produto, pode gerar produtos com o mesmo código
         codigo: (produto.codigo) ? produto.codigo : (await this.setup().count().get().then(count => count.data().count + 1)).toString(),
         data_criacao: new Date(),
@@ -228,6 +228,25 @@ export class ProdutoService {
     transaction.update(docRef, {
       ...produtoAtualizado
     });
+  }
+
+  public async atualizarEstoque_EmTransacao(transaction: FirebaseFirestore.Transaction, id_produto: string, valor: number, tipoOperacao: 'MAIS' | 'MENOS') {
+    const prodRef = this.setup().doc(id_produto);
+
+    const prodDoc = await prodRef.get()
+    if (!(prodDoc.data()?.controle_estoque)) {
+      return
+    }
+
+    if (tipoOperacao === 'MAIS') {
+      transaction.update(prodRef, {
+        quantidade_estoque: admin.firestore.FieldValue.increment(valor)
+      })
+    } else {
+      transaction.update(prodRef, {
+        quantidade_estoque: admin.firestore.FieldValue.increment((valor)*(-1))
+      })
+    }
   }
 
 
