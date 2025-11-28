@@ -8,6 +8,7 @@ import { idToDocumentRef } from 'src/util/firestore.util';
 import { calcularTroco } from 'src/util/venda.util';
 import { FluxoCaixaDTO } from '../fluxo-caixa/fluxo-caixa.dto';
 import { FluxoCaixaService } from '../fluxo-caixa/fluxo-caixa.service';
+import { FuncionarioEstatisticasVendas } from '../funcionario/funcionario.dto';
 import { ItemVenda, VendaDTO } from './venda.dto';
 
 @Injectable()
@@ -40,7 +41,7 @@ export class VendaService {
       venda.status === undefined ||
       venda.tipo === undefined
     ) throw new HttpException(`Campos obrigatórios faltando na venda`, HttpStatus.BAD_REQUEST);
-    
+
 
     const empresaRef = idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS);
     const funcionariosResponsaveisRef: DocumentReference[] = venda.funcionarios_responsaveis?.map((id_funcionario) => {
@@ -70,7 +71,7 @@ export class VendaService {
       codigo: Math.random().toString(), // temporario
       data_venda: new Date()
     }
-  
+
     // executando a transação nas estatisticas, fluxo e venda
     await db.runTransaction(async (transaction) => {
       // atualizando estatistica do produto 
@@ -84,7 +85,7 @@ export class VendaService {
           await this.produtoService.atualizarEstoque_EmTransacao(transaction, item.produto_reference?.id!, item.quantidade, 'MENOS')
         }
       })
-      
+
       // salvando a venda criada
       const novaVendaRef = this.setup().doc()
       transaction.set(novaVendaRef, vendaParaSalvar);
@@ -104,6 +105,28 @@ export class VendaService {
       }
       await this.fluxoService.atualizar_EmTransacao(transaction, id_empresa, atualizacoesParaFluxo);
     })
+  }
+
+  public async enontrarVendasPorIdFuncionario(id_empresa: string, id_funcionario: string) {
+    let querySnap = await this.setup().where("empresa_reference", "==", idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS))
+      .where("funcionarios_responsaveis", "array-contains", idToDocumentRef(id_funcionario, COLLECTIONS.FUNCIONARIOS))
+    .get()
+
+    if (querySnap.empty) {
+      return {
+        total_vendas: 0
+      } as FuncionarioEstatisticasVendas
+    }
+
+    // const vendasEncontradas: VendaDTO[] = querySnap.docs.map((venda) => {
+    //   return 
+    // })
+
+    return {
+      total_vendas: querySnap.size,
+      vendas: querySnap.docs
+    } as FuncionarioEstatisticasVendas
+
   }
 
 }

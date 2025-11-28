@@ -4,13 +4,14 @@ import { COLLECTIONS } from 'src/enum/firestore.enum';
 import { criptografarSenha, verificarSenha } from 'src/util/bcrypt.util';
 import { idToDocumentRef } from 'src/util/firestore.util';
 import { FuncionarioDTO, FuncionarioRequestAuthDTO } from './funcionario.dto';
+import { VendaService } from '../venda/venda.service';
 
 @Injectable()
 export class FuncionarioService {
 
   private COLLECTION_NAME: string
 
-  constructor() {
+  constructor(private readonly vendaService: VendaService) {
     this.COLLECTION_NAME = COLLECTIONS.FUNCIONARIOS,
       this.setup();
   }
@@ -93,6 +94,10 @@ export class FuncionarioService {
 
   public async remover(id_funcionario: string) {
     await this.setup().doc(id_funcionario).delete();
+  }
+
+  public async encontrarVendas(id_empresa: string, id_funcionario: string) {
+    return await this.vendaService.enontrarVendasPorIdFuncionario(id_empresa, id_funcionario);    
   }
 
 

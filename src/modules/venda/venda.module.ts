@@ -12,6 +12,7 @@ import { FluxoCaixaModule } from '../fluxo-caixa/fluxo-caixa.module';
     forwardRef(() => ProdutoModule),
     forwardRef(() => EstatisticaProdutoModule),
     forwardRef(() => FluxoCaixaModule)
-  ]
+  ],
+  exports: [VendaService]
 })
 export class VendaModule {}
