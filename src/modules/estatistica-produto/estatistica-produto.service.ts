@@ -41,44 +41,49 @@ export class EstatisticaProdutoService {
     id_produto: string,
     dadosEst: EstatisticaProdutoBodyParaVendas
   ): Promise<void> {
-    const empresaRef = idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS)
-    const produtoRef = idToDocumentRef(id_produto, COLLECTIONS.PRODUTOS)
+    const empresaRef = idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS);
+    const produtoRef = idToDocumentRef(id_produto, COLLECTIONS.PRODUTOS);
 
-    const estSnapshot = await this.setup()
+    const query = this.setup()
       .where("empresa_reference", "==", empresaRef)
-      .where("produto_reference", "==", produtoRef)
-      .get();
+    .where("produto_reference", "==", produtoRef);
+
+    const estSnapshot = await transaction.get(query);
 
     let estatisticaParaSalvar: Partial<EstatisticaProdutoDTO> = {
       empresa_reference: empresaRef,
       produto_reference: produtoRef,
       ultima_venda: new Date(),
-    }
+    };
 
-    // estatistica do produto ainda nao foi criada, entao deve cria-lo
     if (estSnapshot.empty) {
-      console.info('primeira venda do produto, criando estatistica....')
-      const newRef = this.setup().doc()
-
+      const newRef = this.setup().doc();
       estatisticaParaSalvar.data_criacao = new Date();
 
       transaction.set(newRef, {
         ...estatisticaParaSalvar,
-        lucro: admin.firestore.FieldValue.increment(dadosEst.quantidade_vendida * dadosEst.preco_atual),
-        quantidade_saida: admin.firestore.FieldValue.increment(dadosEst.quantidade_vendida),
-        datas_historico_vendas: admin.firestore.FieldValue.arrayUnion(new Date())
-      })
-      return
+        lucro: admin.firestore.FieldValue.increment(
+          dadosEst.quantidade_vendida * dadosEst.preco_atual
+        ),
+        quantidade_saida: admin.firestore.FieldValue.increment(
+          dadosEst.quantidade_vendida
+        ),
+        datas_historico_vendas: admin.firestore.FieldValue.arrayUnion(new Date()),
+      });
+      return;
     }
 
-    const estRef = estSnapshot.docs[0].ref
+    const estRef = estSnapshot.docs[0].ref;
 
-    transaction.set(estRef, {
-      ...estatisticaParaSalvar,
-      lucro: admin.firestore.FieldValue.increment(dadosEst.quantidade_vendida * dadosEst.preco_atual),
-      quantidade_saida: admin.firestore.FieldValue.increment(dadosEst.quantidade_vendida),
-      datas_historico_vendas: admin.firestore.FieldValue.arrayUnion(new Date())
-    })
+    transaction.update(estRef, {
+      lucro: admin.firestore.FieldValue.increment(
+        dadosEst.quantidade_vendida * dadosEst.preco_atual
+      ),
+      quantidade_saida: admin.firestore.FieldValue.increment(
+        dadosEst.quantidade_vendida
+      ),
+      datas_historico_vendas: admin.firestore.FieldValue.arrayUnion(new Date()),
+    });
   }
 
   public async encontrar(id_empresa: string, id_produto: string): Promise<EstatisticaProdutoDTO> {

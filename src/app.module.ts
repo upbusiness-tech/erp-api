@@ -10,7 +10,8 @@ import { FuncionarioModule } from './modules/funcionario/funcionario.module';
 import { CategoriaProdutoModule } from './modules/categoria-produto/categoria-produto.module';
 import { DicionarioModule } from './modules/dicionario/dicionario.module';
 import { EstatisticaProdutoModule } from './modules/estatistica-produto/estatistica-produto.module';
-import { VendaModule } from './venda/venda.module';
+import { VendaModule } from './modules/venda/venda.module';
+import { FluxoCaixaModule } from './modules/fluxo-caixa/fluxo-caixa.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { VendaModule } from './venda/venda.module';
     CategoriaProdutoModule,
     DicionarioModule,
     EstatisticaProdutoModule,
-    VendaModule
+    VendaModule,
+    FluxoCaixaModule
   ],
   controllers: [AppController],
   providers: [AppService],

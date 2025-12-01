@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { User } from 'src/decorator/user.decorator';
 import { FuncionarioDTO, FuncionarioRequestAuthDTO } from './funcionario.dto';
@@ -45,6 +45,17 @@ export class FuncionarioController {
   @Delete('/deletar/:id')
   remover(@Param('id') id: string) {
     this.funcionarioService.remover(id)
+  }
+
+  @Get('/vendas/:id')
+  dadosDasVendas(
+    @Param('id') id: string, 
+    @User('uid') uid: string,
+    // posteriormente fazer filtragem com datas de vendas
+    @Query('periodoInicio') periodoInicio: string,
+    @Query('periodoFim') periodoFim: string
+  ) {
+    return this.funcionarioService.encontrarVendas(uid, id);
   }
 
 }

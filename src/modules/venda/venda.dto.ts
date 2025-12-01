@@ -14,7 +14,6 @@ export class VendaDTO {
   pagamentos: Pagamento[];
   status: StatusVenda;
   operador_caixa?: DocumentReference | string | null; // algum dos usuarios que for caixa da empresa deve ser colocando aqui
-  troco: number;
   motivo_cancelamento?: string;
   data_venda: Date
 }

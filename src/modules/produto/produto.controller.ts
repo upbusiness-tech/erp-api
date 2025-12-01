@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ProdutoDTO } from './produto.dto';
 import { ProdutoService } from './produto.service';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -10,13 +10,11 @@ export class ProdutoController {
 
   constructor(private readonly produtoService: ProdutoService) { }
 
-  private categoriaTemplate: string = 'Doces';
-
+  @HttpCode(HttpStatus.CREATED)
   @Post()
   criar(@Body() produto: ProdutoDTO, @User('uid') uid: string) {
     try {
       // temporariamente passando empresa e categorias fixas
-      produto.categoria = this.categoriaTemplate;
 
       return this.produtoService.criar(uid, produto)
     } catch (error) {
@@ -33,6 +31,7 @@ export class ProdutoController {
     }
   }
 
+  @HttpCode(HttpStatus.OK)
   @Delete('/deletar/:id')
   remover(@Param('id') id: string, @User('uid') uid: string) {
     try {
@@ -42,6 +41,7 @@ export class ProdutoController {
     }
   }
 
+  @HttpCode(HttpStatus.OK)
   @Get('/encontrar/:id')
   encontrarPorId(@Param('id') id: string) {
     try {
@@ -51,6 +51,7 @@ export class ProdutoController {
     }
   }
 
+  @HttpCode(HttpStatus.OK)
   @Put('/atualizar/:id')
   atualizarPorId(@Param('id') id: string, @User('uid') uid: string, @Body() produtoBody: Partial<ProdutoDTO>) {
     try {

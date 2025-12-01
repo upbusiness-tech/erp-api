@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { User } from 'src/decorator/user.decorator';
 import { CategoriaProdutoService } from './categoria-produto.service';
@@ -9,6 +9,7 @@ export class CategoriaProdutoController {
 
   constructor(private readonly categoriaProdutoService: CategoriaProdutoService) {}
 
+  @HttpCode(HttpStatus.CREATED)
   @Post()
   criar(@Body('nome') nome: string, @User('uid') uid: string) {
     return this.categoriaProdutoService.criar(uid, nome);

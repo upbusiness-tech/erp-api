@@ -22,7 +22,7 @@ export class CategoriaProdutoService {
 
   private docToObject(id: string, data: FirebaseFirestore.DocumentData): CategoriaProdutoDTO {
     return {
-      id_categoria: id,
+      id: id,
       nome: data.nome,
       empresa_reference: data.empresa_reference.id || '',
       id_empresa: data.empresa_reference.id || ''
@@ -50,10 +50,7 @@ export class CategoriaProdutoService {
     if (snapshot.empty) return []
     
     let listaCategoriasEncontradas: CategoriaProdutoDTO[] = snapshot.docs.map((categoria) => {
-      return {
-        id_categoria: categoria.id,
-        ...categoria.data() as CategoriaProdutoDTO
-      }
+      return this.docToObject(categoria.id, categoria.data());
     })
 
     return listaCategoriasEncontradas
@@ -71,7 +68,6 @@ export class CategoriaProdutoService {
       // atualizando os produtos um por um
       produtosAssociados.forEach((produto) => {
         const produtoAtualizado: Partial<ProdutoDTO> = {
-          categoria: '',
           categoria_reference: null,
         }
 
