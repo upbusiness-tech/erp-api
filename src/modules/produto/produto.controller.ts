@@ -86,4 +86,31 @@ export class ProdutoController {
     }
   }
 
+  @Get('/estoque-quantidade')
+  encontrarMaiorEstoque(
+    @User('uid') uid: string, 
+    @Query('ordem') ordernarPor: string,
+    @Query('limite') limite: string
+  ) {
+    try {
+      const limiteValido = Number(limite);
+      return this.produtoService.encontrarEstatisticaQtdEstoque(uid, ordernarPor, limiteValido);
+    } catch (error) {
+      throw new HttpException(`Erro ao encontrar produto com maior estoque ${error}`, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  @Get('/estoque-esgotado')
+  encontrarEstoqueEsgotado(
+    @User('uid') uid: string, 
+    @Query('limite') limite: string
+  ) {
+    try {
+      const limiteValido = Number(limite);
+      return this.produtoService.encontrar("quantidade_estoque", "==", 0, true, uid, limiteValido);
+    } catch (error) {
+      throw new HttpException(`Erro ao encontrar produto com maior estoque ${error}`, HttpStatus.BAD_REQUEST)
+    }
+  }
+
 }

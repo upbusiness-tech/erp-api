@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ProdutoDTO } from './produto.dto';
 import { db } from 'src/config/firebase';
 import { COLLECTIONS } from 'src/enum/firestore.enum';
-import { idToDocumentRef } from 'src/util/firestore.util';
+import { docToObject, idToDocumentRef } from 'src/util/firestore.util';
 import { DicionarioService } from '../dicionario/dicionario.service';
 import admin from "firebase-admin";
 
@@ -209,20 +209,44 @@ export class ProdutoService {
     };
   };
 
-  public async encontrar(campoDeFiltro: string, operacao: admin.firestore.WhereFilterOp, valor: any, asObject: boolean) {
-    let query = await this.setup().where(campoDeFiltro, operacao, valor).get()
+  public async encontrar(campoDeFiltro: string, operacao: admin.firestore.WhereFilterOp, valor: any, asObject: boolean, id_empresa?: string, limite?: number) {
+    let query = this.setup().where(campoDeFiltro, operacao, valor);
 
-    if (query.empty) return []
+    if (id_empresa) query = query.where("empresa_reference", "==", idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS));
+
+    if (limite) query = query.limit(limite);
+
+    const querySnap = await query.get();
+
+    if (querySnap.empty) return []
 
     if (asObject) {
-      const listaDeProdutosEncontrados: ProdutoDTO[] = query.docs.map((doc) => {
-        return this.docToObject(doc.id, doc.data()!)
+      const listaDeProdutosEncontrados: ProdutoDTO[] = querySnap.docs.map((doc) => {
+        return docToObject<ProdutoDTO>(doc.id, doc.data()!)
       })
 
       return listaDeProdutosEncontrados
     }
 
-    return query.docs
+    return querySnap.docs
+  }
+
+  public async encontrarEstatisticaQtdEstoque(id_empresa: string, ordenarPor: string, limite?: number) {
+    const ordem: admin.firestore.OrderByDirection = (ordenarPor === 'asc')?'asc':'desc';
+    let query = this.setup().where("empresa_reference", "==", idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS))
+    .orderBy("quantidade_estoque", ordem);
+
+    if (limite) query = query.limit(limite);
+
+    const querySnap = await query.get();
+
+    if (querySnap.empty) return []
+
+    const resultados = querySnap.docs.map((doc) => {
+      return docToObject<ProdutoDTO>(doc.id, doc.data())
+    })
+
+    return resultados;
   }
 
   public atualizar_EmTransacao(transaction: FirebaseFirestore.Transaction, id_produto: string, produtoAtualizado: Partial<ProdutoDTO>) {
