@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { FluxoCaixaService } from './fluxo-caixa.service';
 import { User } from 'src/decorator/user.decorator';
@@ -17,6 +17,7 @@ export class FluxoCaixaController {
     return this.fluxoService.criar(uid, fluxoBody)
   }
 
+  @HttpCode(HttpStatus.OK)
   @Get('/aberto')
   encontrarFluxoCaixaAberto(@User('uid') uid: string) {
     const resultado = this.fluxoService.encontrar("status", "==", true, uid)

@@ -272,7 +272,7 @@ export class ProdutoService {
     }
     if (tipoOperacao === 'MENOS') {
       transaction.update(prodRef, {
-        quantidade_estoque: admin.firestore.FieldValue.increment(-(valor * (-1)))
+        quantidade_estoque: admin.firestore.FieldValue.increment(-valor)
       })
       return
     }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import admin from "firebase-admin";
 import { db } from 'src/config/firebase';
 import { COLLECTIONS } from 'src/enum/firestore.enum';
@@ -21,13 +21,13 @@ export class FluxoCaixaService {
 
   private docToObject(id: string, data: FirebaseFirestore.DocumentData): FluxoCaixaDTO {
     return {
-      id_fluxo: id,
-      data_abertura: data.data_abertura?.toDate(),
-      data_fechamento: data.data_fechamento?.toDate(),
+      id: id,
+      data_abertura: data.data_abertura?.toDate() || '',
+      data_fechamento: data.data_fechamento?.toDate() || '',
       diferencas: data.diferencas,
       empresa_reference: data.empresa_reference.id || '',
       entradas: data.entradas,
-      funcionario_responsavel_abertura: data.funcionario_responsavel_abertura || '',
+      funcionario_responsavel_abertura: data.funcionario_responsavel_abertura?.id || '',
       funcionario_responsavel_fechamento: data.funcionario_responsavel_fechamento?.id || '',
       reposicao_troco: data.reposicao_troco,
       sangria: data.sangria,
@@ -72,8 +72,18 @@ export class FluxoCaixaService {
     return this.docToObject(query.docs[0].id, query.docs[0].data()!);
   }
 
+  public async encontrarPorId(id_fluxo) {
+    let fluxo = await this.setup().doc(id_fluxo).get()
+
+    if (!fluxo.exists) throw new HttpException("Fluxo não encontrado", HttpStatus.BAD_REQUEST);
+
+    return this.docToObject(fluxo.id, fluxo.data()!);
+  }
+
   public async listarTodos(id_empresa: string) {
-    const fluxSnap = await this.setup().where('empresa_reference', '==', idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS)).get()
+    const fluxSnap = await this.setup().where('empresa_reference', '==', idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS))
+      .orderBy("data_abertura", "desc")
+    .get()
 
     if (fluxSnap.empty) return []
 
@@ -101,7 +111,7 @@ export class FluxoCaixaService {
 
     if (!fluxoAberto) return;
 
-    const docRef = this.setup().doc(fluxoAberto.id_fluxo!);
+    const docRef = this.setup().doc(fluxoAberto.id!);
 
     // 1 — Primeiro update sem mexer nos arrays
     const updateData: any = {};

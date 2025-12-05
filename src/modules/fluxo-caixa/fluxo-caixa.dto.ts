@@ -2,7 +2,7 @@ import { DocumentReference } from "firebase-admin/firestore";
 import { Pagamento } from "src/modules/venda/venda.dto";
 
 export class FluxoCaixaDTO {
-  id_fluxo?: string;
+  id?: string;
   funcionario_responsavel_abertura: DocumentReference | string;
   funcionario_responsavel_fechamento?: DocumentReference | string | null;
   empresa_reference: DocumentReference | string;

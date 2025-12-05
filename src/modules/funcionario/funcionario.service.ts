@@ -68,7 +68,7 @@ export class FuncionarioService {
 
   public async encontrarPorId(id_funcionario: string): Promise<FuncionarioDTO> {
     const doc = await this.setup().doc(id_funcionario).get();
-    if (!doc.exists) throw new Error("Funcionário não encontrado");
+    if (!doc.exists) throw new HttpException("Funcionário não encontrado", HttpStatus.BAD_REQUEST);
     return this.docToObject(doc.id, doc.data()!);
   }
 
