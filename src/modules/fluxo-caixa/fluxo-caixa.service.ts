@@ -3,7 +3,7 @@ import admin from "firebase-admin";
 import { db } from 'src/config/firebase';
 import { COLLECTIONS } from 'src/enum/firestore.enum';
 import { idToDocumentRef } from 'src/util/firestore.util';
-import { FluxoCaixaDTO } from './fluxo-caixa.dto';
+import { FluxoCaixaDTO, FluxoCaixaResponseDTO, SangriaOuReposicao, transformarObjSangriaReposicao } from './fluxo-caixa.dto';
 
 @Injectable()
 export class FluxoCaixaService {
@@ -19,7 +19,7 @@ export class FluxoCaixaService {
     return db.collection(this.COLLECTION_NAME);
   }
 
-  private docToObject(id: string, data: FirebaseFirestore.DocumentData): FluxoCaixaDTO {
+  private docToObject(id: string, data: FirebaseFirestore.DocumentData): FluxoCaixaResponseDTO {
     return {
       id: id,
       data_abertura: data.data_abertura?.toDate() || '',
@@ -29,8 +29,8 @@ export class FluxoCaixaService {
       entradas: data.entradas,
       funcionario_responsavel_abertura: data.funcionario_responsavel_abertura?.id || '',
       funcionario_responsavel_fechamento: data.funcionario_responsavel_fechamento?.id || '',
-      reposicao_troco: data.reposicao_troco,
-      sangria: data.sangria,
+      reposicao_troco: transformarObjSangriaReposicao(data.reposicao_troco),
+      sangria: transformarObjSangriaReposicao(data.sangria),
       status: data.status,
       troco: data.troco,
       valor_inicial: data.valor_inicial,
@@ -38,7 +38,7 @@ export class FluxoCaixaService {
     }
   }
 
-  public async criar(id_empresa: string, fluxoBody: Partial<FluxoCaixaDTO>): Promise<FluxoCaixaDTO> {
+  public async criar(id_empresa: string, fluxoBody: Partial<FluxoCaixaDTO>): Promise<FluxoCaixaResponseDTO> {
     if (fluxoBody.valor_inicial === undefined) throw new Error('Necessário preencher valor inical para abrir caixa')
 
     const fluxoParaSalvar: FluxoCaixaDTO = {
@@ -67,12 +67,12 @@ export class FluxoCaixaService {
       .where("empresa_reference", "==", idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS))
       .get()
 
-    if (query.empty) return undefined
+    if (query.empty) throw new HttpException('Fluxo de caixa não encontrado', HttpStatus.BAD_REQUEST)
 
     return this.docToObject(query.docs[0].id, query.docs[0].data()!);
   }
 
-  public async encontrarPorId(id_fluxo) {
+  public async encontrarPorId(id_fluxo: string) {
     let fluxo = await this.setup().doc(id_fluxo).get()
 
     if (!fluxo.exists) throw new HttpException("Fluxo não encontrado", HttpStatus.BAD_REQUEST);
@@ -87,7 +87,7 @@ export class FluxoCaixaService {
 
     if (fluxSnap.empty) return []
 
-    let resultado: FluxoCaixaDTO[] = fluxSnap.docs.map((flux, indice) => {
+    let resultado: FluxoCaixaResponseDTO[] = fluxSnap.docs.map((flux, indice) => {
       return this.docToObject(flux.id, flux.data()!)
     })
 
@@ -141,5 +141,22 @@ export class FluxoCaixaService {
     }
   }
 
+  public async adicionarSangriaOuReposicao(id_fluxo: string, payload: Partial<SangriaOuReposicao>, tipoOperacao: 'sangria' | 'reposicao_troco') {
+    // validações
+    if (payload.valor === undefined) throw new HttpException('Necessário valor para efetuar', HttpStatus.BAD_REQUEST)
+    if (payload.funcionario_responsavel === undefined) throw new HttpException('Necessário funcionário responsável para efetuar', HttpStatus.BAD_REQUEST)
+
+    const payloadParaInserir: SangriaOuReposicao = {
+      valor: payload.valor,
+      funcionario_responsavel: idToDocumentRef(payload.funcionario_responsavel as string, COLLECTIONS.FUNCIONARIOS),
+      data_de_entrada: new Date()
+    }
+
+    const fluxoRef = this.setup().doc(id_fluxo);
+
+    await fluxoRef.update({
+      [tipoOperacao]: admin.firestore.FieldValue.arrayUnion(payloadParaInserir) 
+    })
+  }
 
 }

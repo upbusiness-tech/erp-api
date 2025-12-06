@@ -47,3 +47,9 @@ export class Pagamento {
 export type TipoPagamento = 'PIX' | 'DINHEIRO' | 'DEBITO' | 'CREDITO';
 export type TipoVenda = 'BALCAO' | 'SERVIÇO' | 'PDV';
 export type StatusVenda = 'CONCLUIDA' | 'AGUARDANDO' | 'ANDAMENTO' | 'CANCELADA';
+
+export class VendasDoFluxoDTO {
+  qtd_total: number;
+  receita: number;
+  vendas: VendaDTO[];
+}

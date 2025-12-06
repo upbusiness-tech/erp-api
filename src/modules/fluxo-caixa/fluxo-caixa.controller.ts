@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Param, Post
 import { AuthGuard } from 'src/auth/auth.guard';
 import { FluxoCaixaService } from './fluxo-caixa.service';
 import { User } from 'src/decorator/user.decorator';
-import { FluxoCaixaDTO } from './fluxo-caixa.dto';
+import { FluxoCaixaDTO, SangriaOuReposicao } from './fluxo-caixa.dto';
 import { idToDocumentRef } from 'src/util/firestore.util';
 import { COLLECTIONS } from 'src/enum/firestore.enum';
 
@@ -30,6 +30,7 @@ export class FluxoCaixaController {
     return this.fluxoService.listarTodos(uid)
   }
 
+  @HttpCode(HttpStatus.OK)
   @Put('/fechar/:id')
   fecharFluxoCaixa(@Param('id') id: string, @Body() fluxPayload: Partial<FluxoCaixaDTO>) {
     this.fluxoService.atualizar(id, {
@@ -38,6 +39,18 @@ export class FluxoCaixaController {
       status: false,
       data_fechamento: new Date()
     })
+  }
+
+  @HttpCode(HttpStatus.CREATED)
+  @Put('/sangria/:id')
+  adicionarSangria(@Param('id') id: string, @Body() sangriaPayload: Partial<SangriaOuReposicao>) {
+    this.fluxoService.adicionarSangriaOuReposicao(id, sangriaPayload, 'sangria');
+  }
+
+  @HttpCode(HttpStatus.CREATED)
+  @Put('/reposicao/:id')
+  adicionarReposicao(@Param('id') id: string, @Body() sangriaPayload: Partial<SangriaOuReposicao>) {
+    this.fluxoService.adicionarSangriaOuReposicao(id, sangriaPayload, 'reposicao_troco');    
   }
 
 }

@@ -1,4 +1,4 @@
-import { DocumentReference } from "firebase-admin/firestore";
+import { DocumentReference, Timestamp } from "firebase-admin/firestore";
 import { Pagamento } from "src/modules/venda/venda.dto";
 
 export class FluxoCaixaDTO {
@@ -18,8 +18,42 @@ export class FluxoCaixaDTO {
   data_fechamento: Date | null;
 }
 
+export class FluxoCaixaResponseDTO {
+  id?: string;
+  funcionario_responsavel_abertura: DocumentReference | string;
+  funcionario_responsavel_fechamento?: DocumentReference | string | null;
+  empresa_reference: DocumentReference | string;
+  valor_inicial: number;
+  entradas: Pagamento[]; //
+  reposicao_troco: SangriaOuReposicaoResponse[];
+  sangria: SangriaOuReposicaoResponse[]; 
+  troco: number; 
+  status: boolean;
+  valores_finais_informados: Pagamento[];
+  diferencas: Pagamento[];
+  data_abertura: Date;
+  data_fechamento: Date | null;
+}
+
 export type SangriaOuReposicao = {
   valor: number,
   funcionario_responsavel: string | DocumentReference,
-  data_de_entrada: Date,
+  data_de_entrada: Date | Timestamp,
+}
+
+export type SangriaOuReposicaoResponse = {
+  valor: number,
+  funcionario_responsavel: string,
+  data_de_entrada: string,
+}
+
+export function transformarObjSangriaReposicao(original: SangriaOuReposicao[]) {
+  const transformados: SangriaOuReposicaoResponse[] = original.map((elemento) => {
+    return {
+      valor: elemento.valor,
+      data_de_entrada: (elemento.data_de_entrada as Timestamp).toDate().toISOString(),
+      funcionario_responsavel: (elemento.funcionario_responsavel as DocumentReference).id
+    }
+  })
+  return transformados;
 }

@@ -9,7 +9,7 @@ import { calcularTotalVendas, calcularTroco } from 'src/util/venda.util';
 import { FluxoCaixaDTO } from '../fluxo-caixa/fluxo-caixa.dto';
 import { FluxoCaixaService } from '../fluxo-caixa/fluxo-caixa.service';
 import { FuncionarioEstatisticasVendas } from '../funcionario/funcionario.dto';
-import { ItemVenda, VendaDTO } from './venda.dto';
+import { ItemVenda, VendaDTO, VendasDoFluxoDTO } from './venda.dto';
 
 @Injectable()
 export class VendaService {
@@ -135,25 +135,25 @@ export class VendaService {
 
   }
 
-  public async encontrarPorFluxoAtual(id_empresa: string) {
+  public async encontrarPorFluxoAtual(id_empresa: string): Promise<VendasDoFluxoDTO> {
     const fluxoDeCaixaAtual = await this.fluxoService.encontrar("status", "==", true, id_empresa);
 
     const dataAbertura = Timestamp.fromDate(fluxoDeCaixaAtual?.data_abertura!)
 
-    if (!fluxoDeCaixaAtual) return []
+    if (!fluxoDeCaixaAtual) return { qtd_total: 0, receita: 0, vendas: [] }
 
     const querySnap = await this.setup().where("empresa_reference", "==", idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS))
       .where("data_venda", ">=", dataAbertura)
       .orderBy("data_venda", "desc")
       .get();
 
-    if (querySnap.empty) return []
+    if (querySnap.empty) return { qtd_total: 0, receita: 0, vendas: [] }
 
     const vendasEncontradas: VendaDTO[] = querySnap.docs.map((doc) => {
       return docToObject<VendaDTO>(doc.id, doc.data())
     })
 
-    return vendasEncontradas;
+    return { qtd_total: vendasEncontradas.length, receita: calcularTotalVendas(vendasEncontradas), vendas: vendasEncontradas }
   }
 
   public async encontrarPorIdFluxo(id_empresa: string, id_fluxo: string) {

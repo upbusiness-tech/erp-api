@@ -47,9 +47,9 @@ export class FuncionarioService {
 
     const funcionarioEncontrado = this.docToObject((await query.get()).docs[0].id, (await query.get()).docs[0].data());
     
-    if (!verificarSenha(payload.senha, funcionarioEncontrado.senha)) throw new HttpException('', HttpStatus.FORBIDDEN)
+    if (!verificarSenha(payload.senha, funcionarioEncontrado.senha)) throw new HttpException('Senha incorreta', HttpStatus.FORBIDDEN)
 
-    return HttpStatus.ACCEPTED
+    return funcionarioEncontrado
   }
 
   public async criar(id_empresa: string, funcionario: FuncionarioDTO): Promise<FuncionarioDTO> {
@@ -83,12 +83,17 @@ export class FuncionarioService {
     });
   }
 
-  public async listarTodos(id_empresa: string): Promise<ListaFuncionarioDTO> {
-    let query = await this.setup().where('empresa_reference', '==', idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS)).get();
-    if (!query.empty) {
+  public async listarTodos(id_empresa: string, queryPermissaoFuncionario?: string): Promise<ListaFuncionarioDTO> {
+    let query = this.setup().where('empresa_reference', '==', idToDocumentRef(id_empresa, COLLECTIONS.EMPRESAS));
+    
+    if (queryPermissaoFuncionario) query = query.where("permissao", 'array-contains', queryPermissaoFuncionario.toUpperCase());
+    
+    const querySnap = await query.get()
+
+    if (!querySnap.empty) {
       return {
-        total: query.docs.length,
-        funcionarios: query.docs.map(doc => this.docToObject(doc.id, doc.data()))
+        total: querySnap.docs.length,
+        funcionarios: querySnap.docs.map(doc => this.docToObject(doc.id, doc.data()))
       }
     }
     return {

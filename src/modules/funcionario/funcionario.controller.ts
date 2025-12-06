@@ -17,8 +17,11 @@ export class FuncionarioController {
   }
 
   @Get()
-  listarFuncionarios(@User('uid') uid: string) {
-    return this.funcionarioService.listarTodos(uid);
+  listarFuncionarios(
+    @User('uid') uid: string,
+    @Query('permissao') permissao: string
+  ) {
+    return this.funcionarioService.listarTodos(uid, permissao);
   }
 
   @Get('/:id')
