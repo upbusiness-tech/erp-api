@@ -5,6 +5,7 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "tsConfigPath": "tsconfig.json",
+    "entryFile": "main",
     "assets": [
       {
         "include": "**/*.json",

@@ -1,32 +1,19 @@
-# Estágio 1: Build
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-
-# Copiar package.json e instalar dependências
-COPY package*.json ./
-RUN npm ci
-
-# Copiar código e buildar
-COPY . .
-RUN npm run build
-
-# Estágio 2: Produção
+# Dockerfile SIMPLIFICADO
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Instalar apenas dependências de produção
-COPY package*.json ./
-RUN npm ci --only=production
+# Copiar tudo
+COPY . .
 
-# Copiar build do estágio anterior
-COPY --from=builder /app/dist ./dist
+# Instalar dependências
+RUN npm install
 
-# Variáveis de ambiente
-ENV NODE_ENV=production
-ENV PORT=8080
+# Build da aplicação
+RUN npm run build
 
+# Porta
 EXPOSE 8080
 
-CMD ["node", "dist/main"]
+# Comando de inicialização
+CMD ["node", "dist/main.js"]
