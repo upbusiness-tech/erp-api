@@ -21,15 +21,15 @@ export function somarTotalItensVenda(itensVenda: ItemVenda[] | undefined, servic
     return total + item.produto_objeto.preco_venda * item.quantidade;
   }, 0);
 
-  // let totalServico = 0
-  // if (servicos != undefined) {
-  //   totalServico = servicos?.reduce((total, servico) => {
-  //     return total + servico.valor;
-  //   }, 0);
-  // }
+  let totalServico = 0
+  if (servicos != undefined) {
+    totalServico = servicos?.reduce((total, servico) => {
+      return total + servico.valor;
+    }, 0);
+  }
 
-  // return Number(totalItens) + totalServico;
-  return Number(totalItens);
+  return Number(totalItens) + totalServico;
+  // return Number(totalItens);
 }
 
 export const calcularTotalVendas = (vendas: VendaDTO[]): number => {
@@ -40,6 +40,14 @@ export const calcularTotalVendas = (vendas: VendaDTO[]): number => {
       return soma + preco * quantidade;
     }, 0);
 
-    return totalGeral + totalVenda;
+    let totalServico = 0
+    if (venda.dados_servico) {
+      totalServico = venda.dados_servico.reduce((soma, servico) => {
+        const preco = servico.valor
+        return soma + preco;
+      }, 0);
+    } 
+
+    return totalGeral + totalVenda + totalServico;
   }, 0);
 };
