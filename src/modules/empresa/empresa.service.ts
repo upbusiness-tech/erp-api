@@ -29,7 +29,7 @@ export class EmpresaService {
       taxa_servico: data.taxa_servico,
       email: data.email,
       email_contato: data.email_contato,
-      data_criacao: data.data_criacao
+      data_criacao: data.data_criacao?.toDate() || ''
     }
   }
 

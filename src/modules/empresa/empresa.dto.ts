@@ -39,7 +39,7 @@ export function toAtalhosRapidosEmpresaReponse (atalhos: AtalhosRapidosEmpresa[]
     return {
       id: atalho.id,
       label: atalho.label,
-      criado_em: (atalho.criado_em as any).toDate()
+      criado_em: 'Não informado'
     }
   })
   return convertidos

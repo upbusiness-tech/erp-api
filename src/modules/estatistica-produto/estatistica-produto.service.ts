@@ -5,6 +5,7 @@ import { COLLECTIONS } from 'src/enum/firestore.enum';
 import { idToDocumentRef } from 'src/util/firestore.util';
 import { ItemVenda } from '../venda/venda.dto';
 import { EstatisticaProdutoBodyParaVendas, EstatisticaProdutoDTO, TransacaoEstatistica } from './estatistica-produto.dto';
+import { toArrayISO } from '@/util/date.util';
 
 @Injectable()
 export class EstatisticaProdutoService {
@@ -22,11 +23,9 @@ export class EstatisticaProdutoService {
 
   private docToObject(id: string, data: FirebaseFirestore.DocumentData): EstatisticaProdutoDTO {
     return {
-      id_estatistica: id,
-      id_empresa: data.id_empresa || '',
-      id_produto: data.id_produto || '',
+      id: id,
       ultima_venda: data.ultima_venda?.toDate(),
-      datas_historico_vendas: data.datas_historico_vendas,
+      datas_historico_vendas: toArrayISO(data.datas_historico_vendas),
       empresa_reference: data.empresa_reference?.id || '',
       produto_reference: data.produto_reference?.id || '',
       produto_objeto: data.produto_objeto,
@@ -170,7 +169,7 @@ export class EstatisticaProdutoService {
 
   public async remover_EmTransacao(transaction: FirebaseFirestore.Transaction, id_empresa: string, id_produto: string) {
     const estEncontrada = await this.encontrar(id_empresa, id_produto);
-    const estRef = this.setup().doc(estEncontrada.id_estatistica!)
+    const estRef = this.setup().doc(estEncontrada.id!)
 
     transaction.delete(estRef);
   }

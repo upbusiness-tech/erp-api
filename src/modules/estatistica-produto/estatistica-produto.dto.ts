@@ -3,9 +3,7 @@ import { ProdutoDTO } from "../produto/produto.dto";
 import admin from "firebase-admin";
 
 export class EstatisticaProdutoDTO {
-  id_estatistica?: string;
-  id_empresa?: string;
-  id_produto?: string;
+  id?: string;
   ultima_venda: Date;
   datas_historico_vendas?: Date[];
   empresa_reference: DocumentReference | string | null;
